@@ -1,5 +1,6 @@
+from dataclasses import dataclass
+from copy import deepcopy
 import random
-
 
 class Sudoku:
     matrix: list[list[int]]
@@ -7,9 +8,9 @@ class Sudoku:
     def __init__(self, matrix: list[list[int]]):
         self.matrix = matrix
 
-    def set_box(self, x: int, data: list[int]):
-        box_y = (x // 3) * 3
-        box_x = (x % 3) * 3
+    def set_box(self, z: int, data: list[int]):
+        box_y = (z // 3) * 3
+        box_x = (z % 3) * 3
 
         for index, i in enumerate(range(0, 9, 3)):
             self.matrix[box_y + index][box_x: box_x + 3] = data[i: i + 3]
@@ -40,9 +41,18 @@ class Sudoku:
         for i in range(3):
             numbers.extend(self.matrix[origin_y + i][origin_x: origin_x + 3])
         return numbers
+    
+    def get_boxN(self, z: int) -> list[int]:
+        box_y = (z // 3) * 3
+        box_x = (z % 3) * 3
+
+        numbers = []
+        for index in range(3):
+            numbers.extend(self.matrix[box_y + index][box_x: box_x + 3])
+        return numbers
 
     def is_completed(self) -> bool:
-        for func in [self.get_row, self.get_column, self.get_box]:
+        for func in [self.get_row, self.get_column, self.get_boxN]:
             for i in range(9):
                 if sum([j for j in func(i) if j is not None]) != 45:
                     return False
@@ -60,13 +70,40 @@ class Sudoku:
         return self.__str__()
 
 def solve(sudoku: Sudoku) -> Sudoku:
+    sudoku = deepcopy(sudoku)
+    possibilities: list[CoorWithPossibleSolutions] = []
+
     for y in range(9):
         for x in range(9):
             if sudoku.matrix[y][x] is None:
-                print(sudoku.get_possible_solutions(x, y))
+                possibilities.append(
+                    CoorWithPossibleSolutions(
+                        (x, y),
+                        sudoku.get_possible_solutions(x, y)
+                    )
+                )
+
+    possibility: CoorWithPossibleSolutions | None = min(possibilities, key=lambda x: len(x.possibles_solutions))
+    if possibility is None:
+        return None
+
+    for p in possibility.possibles_solutions:
+        sudoku.set_number(*possibility.coor, p)
+
+        if sudoku.is_completed():
+            return sudoku
+        else:
+            child = solve(sudoku)
+            if child is None:
+                continue
+
+            return child 
 
 
-
+@dataclass
+class CoorWithPossibleSolutions:
+    coor: tuple[int, int]
+    possibles_solutions: list[int]
 
 
 def generator() -> Sudoku:
@@ -90,7 +127,7 @@ def generator() -> Sudoku:
 
 
 if __name__ == "__main__":
-    generator()
+    print(generator())
 
 
 # 1 2 3 | 1 2 3 | 1 2 3
