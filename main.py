@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from copy import deepcopy
 import random
 
 class Sudoku:
@@ -15,9 +14,10 @@ class Sudoku:
         for index, i in enumerate(range(0, 9, 3)):
             self.matrix[box_y + index][box_x: box_x + 3] = data[i: i + 3]
 
-    def set_number(self, x: int, y: int, number: int):
-        if number not in self.get_possible_solutions(x, y):
-            raise ValueError(f"Number {number} is not a possible solution for ({x}, {y})")
+    def set_number(self, x: int, y: int, number: int | None):
+        p = self.get_possible_solutions(x, y)
+        if number is not None and number not in p:
+            raise ValueError(f"Number {number} is not a possible solution for ({x}, {y}), possibilities is: {str(p)}")
         self.matrix[y][x] = number
 
     def get_possible_solutions(self, x: int, y: int) -> list[int]:
@@ -69,8 +69,7 @@ class Sudoku:
     def __repr__(self) -> str:
         return self.__str__()
 
-def solve(sudoku: Sudoku) -> Sudoku:
-    sudoku = deepcopy(sudoku)
+def solve(sudoku: Sudoku) -> bool:
     possibilities: list[CoorWithPossibleSolutions] = []
 
     for y in range(9):
@@ -93,11 +92,12 @@ def solve(sudoku: Sudoku) -> Sudoku:
         if sudoku.is_completed():
             return sudoku
         else:
-            child = solve(sudoku)
-            if child is None:
+            if not solve(sudoku):
+                sudoku.set_number(*possibility.coor, None)
                 continue
 
-            return child 
+            return True
+    return False
 
 
 @dataclass
@@ -123,11 +123,26 @@ def generator() -> Sudoku:
     random.shuffle(p3)
     sudoku.set_box(8, p3)
 
-    return solve(sudoku)
+    solve(sudoku)
+    return sudoku
+
 
 
 if __name__ == "__main__":
-    print(generator())
+    s = generator()
+    m1 = s.matrix
+    print(s)
+    # print()
+    # s2 = generate_puzzle(s, "hard")
+    # m2 = s2.matrix
+    # print(s2)
+    # print()
+    # s3 = solve(s2)
+    # m3 = s3.matrix
+    # print(s3)
+    # print()
+    # print(m3 == m1)
+
 
 
 # 1 2 3 | 1 2 3 | 1 2 3
