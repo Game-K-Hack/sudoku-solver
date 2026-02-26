@@ -1,0 +1,24 @@
+@import "tailwindcss";
+
+
+@theme {
+    --color-primary: var(--primary);
+    --color-white: var(--white);
+    --color-black: var(--black);
+    --color-secondary: var(--secondary);
+
+    --color-board-bg: var(--board-bg);
+    --color-board-small-br: var(--board-small-br);
+    --color-board-big-br: var(--board-big-br);
+}
+
+:root {
+    --primary: #485696;
+    --white: #E7E7E7;
+    --black: #171614;
+    --secondary: #048A81;
+
+    --board-bg: #D3D3D3;
+    --board-small-br: #D3D3D3;
+    --board-big-br: #B8B8B8;
+}

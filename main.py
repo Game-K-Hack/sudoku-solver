@@ -1,8 +1,18 @@
+import time
+from functools import wraps
+from copy import deepcopy
 from dataclasses import dataclass
 import random
 
 class Sudoku:
     matrix: list[list[int]]
+    difficulties = {
+        "xs": (36, 50),
+        "s": (32, 35),
+        "m": (28, 31),
+        "l": (22, 27),
+        "xl": (17, 21),
+    }
 
     def __init__(self, matrix: list[list[int]]):
         self.matrix = matrix
@@ -57,6 +67,14 @@ class Sudoku:
                 if sum([j for j in func(i) if j is not None]) != 45:
                     return False
         return True
+    
+    def get_number_of_empty_pos(self) -> int:
+        cpt = 0
+        for y in range(9):
+            for x in range(9):
+                if self.matrix[y][x] == None:
+                    cpt += 1
+        return cpt
 
     def __str__(self) -> str: 
         table_str = []
@@ -82,9 +100,10 @@ def solve(sudoku: Sudoku) -> bool:
                     )
                 )
 
-    possibility: CoorWithPossibleSolutions | None = min(possibilities, key=lambda x: len(x.possibles_solutions))
-    if possibility is None:
+    if len(possibilities) == 0:
         return None
+
+    possibility: CoorWithPossibleSolutions | None = min(possibilities, key=lambda x: len(x.possibles_solutions))
 
     for p in possibility.possibles_solutions:
         sudoku.set_number(*possibility.coor, p)
@@ -105,8 +124,87 @@ class CoorWithPossibleSolutions:
     coor: tuple[int, int]
     possibles_solutions: list[int]
 
+def is_unique(sudoku: Sudoku) -> bool:
+    """
+    False: Si aucune solution trouvée ou deux solutions trouvées
+    True : Si une et une seul solution trouvée
+    """
+    def __process__(sudoku: Sudoku) -> int:
+        """
+        -1 : Deux solutions trouvées
+         0 : Aucune solution trouvée
+         1 : Une solution trouvée 
+        """
+        solution = 0
+        possibilities: list[CoorWithPossibleSolutions] = []
 
-def generator() -> Sudoku:
+        for y in range(9):
+            for x in range(9):
+                if sudoku.matrix[y][x] is None:
+                    possibilities.append(
+                        CoorWithPossibleSolutions(
+                            (x, y),
+                            sudoku.get_possible_solutions(x, y)
+                        )
+                    )
+
+        if len(possibilities) == 0:
+            return 0
+
+        possibility: CoorWithPossibleSolutions | None = min(possibilities, key=lambda x: len(x.possibles_solutions))
+
+        for p in possibility.possibles_solutions:
+            sudoku.set_number(*possibility.coor, p)
+
+            if sudoku.is_completed():
+                sudoku.set_number(*possibility.coor, None)
+                return 1
+            else:
+                child_solution = __process__(sudoku)
+                if child_solution == -1 or (child_solution and solution):
+                    return -1
+                elif child_solution:
+                    solution = 1
+
+                sudoku.set_number(*possibility.coor, None)
+        
+        return solution
+
+    return __process__(deepcopy(sudoku)) != -1
+
+def remove(sudoku: Sudoku, np: int) -> Sudoku:
+    def __process__(sudoku: Sudoku) -> Sudoku:
+        sudoku = deepcopy(sudoku)
+        pos = [(y, x) for y in range(9) for x in range(9)]
+        random.shuffle(pos)
+
+        cpt = 0
+        for p in pos:
+            if cpt >= np:
+                break
+
+            old_value = sudoku.matrix[p[0]][p[1]]
+            sudoku.matrix[p[0]][p[1]] = None
+
+            if not is_unique(sudoku):
+                sudoku.matrix[p[0]][p[1]] = old_value
+            else:
+                cpt += 1
+        
+        return sudoku
+
+    solutions: list[Sudoku] = []
+    for _ in range(5):
+        solution = __process__(sudoku)
+        if solution.get_number_of_empty_pos() == np:
+            return solution
+        else:
+            solutions.append(solution)
+
+    return max(solutions, key=lambda s: s.get_number_of_empty_pos())
+
+
+def generator(difficulty: str = "m") -> Sudoku:
     table = [[None] * 9 for _ in range(9)]
     
     sudoku = Sudoku(table)
@@ -124,25 +222,29 @@ def generator() -> Sudoku:
     sudoku.set_box(8, p3)
 
     solve(sudoku)
+
+    np = {
+        "xs": random.randint(31, 45),
+        "s": random.randint(46, 49),
+        "m": random.randint(50, 53),
+        "l": random.randint(54, 59),
+        "xl": random.randint(60, 64),
+    }[difficulty] # Nombre de passage
+    print("np:", np)
+
+    start_time = time.time()
+    sudoku = remove(sudoku, np)
+    print("--- %s seconds ---" % (time.time() - start_time))
     return sudoku
 
 
 
 if __name__ == "__main__":
-    s = generator()
-    m1 = s.matrix
+    s = generator("xl")
     print(s)
-    # print()
-    # s2 = generate_puzzle(s, "hard")
-    # m2 = s2.matrix
-    # print(s2)
-    # print()
-    # s3 = solve(s2)
-    # m3 = s3.matrix
-    # print(s3)
-    # print()
-    # print(m3 == m1)
 
+    solve(s)
+    print(s)
 
 
 # 1 2 3 | 1 2 3 | 1 2 3
@@ -156,3 +258,5 @@ if __name__ == "__main__":
 # 1 2 3 | 1 . 3 | 1 2 3
 # 1 2 3 | 1 2 3 | 1 2 3
 # 1 2 3 | 1 2 3 | 1 2 3
+
+
