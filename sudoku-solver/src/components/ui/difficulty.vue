@@ -1,5 +1,5 @@
 <template>
-    <div class="difficulty-container">
+    <div class="difficulty-container" :style="styleSize">
         <div class="meter-wrapper">
             <svg viewBox="0 0 100 60" class="meter-svg">
                 <defs>
@@ -14,7 +14,7 @@
             </svg>
         </div>
 
-        <div class="label" :style="{ color: (config.color != null ? config.color : '#FFFFFFFF') }">
+        <div v-if="props.text" class="label" :style="{ color: (config.color != null ? config.color : '#FFFFFFFF') }">
             {{ config.label }}
         </div>
     </div>
@@ -27,10 +27,15 @@
         v: { 
             type: String,
             default: 'none',
-            required: true,
             validator: (val) => ['none', 'easy', 'medium', 'hard', 'extreme'].includes(val)
-        }
+        },
+        size: {type: String, default: "220px"},
+        text: {type: Boolean, default: false}
     });
+
+    const styleSize = computed(() => {return {
+        "--difficulty-size": props.size
+    }});
 
     // Longueur totale de l'arc (calculée pour un rayon de 40 sur 180°)
     const totalLength = 125.6; 
@@ -65,7 +70,7 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        width: 220px;
+        width: var(--difficulty-size);
     }
 
     .meter-wrapper {

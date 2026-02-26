@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+@font-face {
+    font-family: Kalam;
+    src: url(./assets/kalam.woff2) format("woff2");
+    font-display: swap;
+}
 
 @theme {
     --color-primary: var(--primary);
@@ -10,6 +15,12 @@
     --color-board-bg: var(--board-bg);
     --color-board-small-br: var(--board-small-br);
     --color-board-big-br: var(--board-big-br);
+
+    --color-sudoku-square-clicked: var(--sudoku-square-clicked);
+    --color-sudoku-square-row: var(--sudoku-square-row);
+    --color-sudoku-square-error: var(--sudoku-square-error);
+
+    --font-sudoku-number: "Kalam", sans-serif;
 }
 
 :root {
@@ -18,7 +29,12 @@
     --black: #171614;
     --secondary: #048A81;
 
-    --board-bg: #D3D3D3;
+    --board-bg: #FFF;
     --board-small-br: #D3D3D3;
     --board-big-br: #B8B8B8;
+
+    --sudoku-square-default: #FFF;
+    --sudoku-square-clicked: #5bb3ac;
+    --sudoku-square-row: #98cfcb;
+    --sudoku-square-error: #ce3939;
 }
